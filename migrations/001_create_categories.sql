@@ -1,21 +1,37 @@
--- Migración 001: Crear tabla categories
--- Descripción: Tabla de categorías de productos
+-- FASE 1: Crear tabla de categorías
+-- Esta tabla almacena las categorías de productos para el catálogo
 
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nombre VARCHAR(255) NOT NULL UNIQUE,
-  descripcion TEXT,
-  creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  name VARCHAR(100) NOT NULL UNIQUE,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índice para búsquedas por nombre
-CREATE INDEX IF NOT EXISTS idx_categories_nombre ON categories(nombre);
+-- Índice para búsquedas rápidas por nombre
+CREATE INDEX idx_categories_name ON categories(name);
 
--- Comentarios para documentación
-COMMENT ON TABLE categories IS 'Categorías de productos de ferretería';
-COMMENT ON COLUMN categories.id IS 'Identificador único UUID';
-COMMENT ON COLUMN categories.nombre IS 'Nombre de la categoría (único)';
-COMMENT ON COLUMN categories.descripcion IS 'Descripción detallada de la categoría';
-COMMENT ON COLUMN categories.creado_en IS 'Fecha y hora de creación';
-COMMENT ON COLUMN categories.updated_at IS 'Fecha y hora de última actualización';
+-- Habilitar Row Level Security
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
+-- Política: todos pueden leer categorías
+CREATE POLICY "categories_readable_by_all" 
+  ON categories 
+  FOR SELECT 
+  USING (true);
+
+-- Política: nadie puede escribir (solo admin en el futuro)
+CREATE POLICY "categories_no_write" 
+  ON categories 
+  FOR INSERT
+  WITH CHECK (false);
+
+CREATE POLICY "categories_no_update" 
+  ON categories 
+  FOR UPDATE
+  USING (false);
+
+CREATE POLICY "categories_no_delete" 
+  ON categories 
+  FOR DELETE
+  USING (false);

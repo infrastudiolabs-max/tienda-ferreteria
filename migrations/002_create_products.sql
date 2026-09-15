@@ -1,32 +1,45 @@
--- Migración 002: Crear tabla products
--- Descripción: Tabla de productos con referencia a categorías
+-- FASE 1: Crear tabla de productos
+-- Esta tabla almacena los productos del catálogo
 
-CREATE TABLE IF NOT EXISTS products (
+CREATE TABLE products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nombre VARCHAR(255) NOT NULL,
-  descripcion TEXT,
-  precio DECIMAL(10, 2) NOT NULL CHECK (precio > 0),
-  imagen_url TEXT,
-  categoria_id UUID NOT NULL REFERENCES categories(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  price DECIMAL(10, 2) NOT NULL CHECK (price > 0),
+  image_url VARCHAR(500),
+  category_id UUID NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
-  creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índices para optimización de búsquedas
-CREATE INDEX IF NOT EXISTS idx_products_categoria_id ON products(categoria_id);
-CREATE INDEX IF NOT EXISTS idx_products_nombre ON products(nombre);
-CREATE INDEX IF NOT EXISTS idx_products_creado_en ON products(creado_en);
-CREATE INDEX IF NOT EXISTS idx_products_precio ON products(precio);
+-- Índices para búsquedas y filtros rápidos
+CREATE INDEX idx_products_category_id ON products(category_id);
+CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_products_price ON products(price);
+CREATE INDEX idx_products_created_at ON products(created_at);
 
--- Comentarios para documentación
-COMMENT ON TABLE products IS 'Productos disponibles en la ferretería';
-COMMENT ON COLUMN products.id IS 'Identificador único UUID';
-COMMENT ON COLUMN products.nombre IS 'Nombre del producto';
-COMMENT ON COLUMN products.descripcion IS 'Descripción detallada del producto';
-COMMENT ON COLUMN products.precio IS 'Precio del producto en pesos (debe ser positivo)';
-COMMENT ON COLUMN products.imagen_url IS 'URL pública de la imagen del producto';
-COMMENT ON COLUMN products.categoria_id IS 'FK a la categoría del producto';
-COMMENT ON COLUMN products.stock IS 'Cantidad disponible en inventario';
-COMMENT ON COLUMN products.creado_en IS 'Fecha y hora de creación del producto';
-COMMENT ON COLUMN products.actualizado_en IS 'Fecha y hora de última actualización';
+-- Habilitar Row Level Security
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+
+-- Política: todos pueden leer productos
+CREATE POLICY "products_readable_by_all" 
+  ON products 
+  FOR SELECT 
+  USING (true);
+
+-- Política: nadie puede escribir (solo admin en el futuro)
+CREATE POLICY "products_no_write" 
+  ON products 
+  FOR INSERT
+  WITH CHECK (false);
+
+CREATE POLICY "products_no_update" 
+  ON products 
+  FOR UPDATE
+  USING (false);
+
+CREATE POLICY "products_no_delete" 
+  ON products 
+  FOR DELETE
+  USING (false);
